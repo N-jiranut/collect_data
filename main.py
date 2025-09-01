@@ -28,19 +28,26 @@ def print_start_banner():
 
 def save():
     global npose, client, main
-    main=[]
-    npose+=1
-    max=len(client)
-    if max<30:
-        con=1
-    else:
-        con = math.floor(max/15)
-    for id, ob in enumerate(client):
-        if id%con and len(main)<1470:
-            main.extend(ob)
-    df = pandas.DataFrame([main])
-    df.to_csv("main.csv", mode='w', index=False, header=False)
-    print("added to main.csv")
+    if len(client)>0:
+        print("saving...")
+        main=[]
+        npose+=1
+        max=len(client)
+        # print(client)
+        if max<30:
+            for i in range(15):
+                main.extend(client[i])
+        else:
+            con = math.floor(max/15)
+            for id, ob in enumerate(client):
+                if id%con and len(main)<1470:
+                    main.extend(ob) 
+        main.append(cpose)
+        print(len(main),"<=== this is main")
+        # # print(main,"<=== this is main")
+        df = pandas.DataFrame([main])
+        df.to_csv("main.csv", mode='a', index=False, header=False)
+        print("added to main.csv")
 
 def start():
     print_start_banner()
@@ -54,15 +61,18 @@ def start():
         BO=[]
         
         ret, img = cap.read()
-        cv2.putText(img, f"Rec-{nframes}", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2, cv2.LINE_AA)
-        cv2.putText(img, f"{cpose}: {npose}", (600, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2, cv2.LINE_AA)
         
-        frame = cv2.resize(img, (224, 224))
+        frame = cv2.resize(img, (720, 480))
         frame = cv2.flip(frame, 1)
         frame = cv2.cvtColor(frame,cv2.COLOR_RGB2BGR)
-        
+
         hand_result = hands.process(frame)
         pose_results = pose.process(frame)
+        frame = cv2.cvtColor(frame,cv2.COLOR_RGB2BGR)
+    
+        cv2.putText(frame, f"Rec-{nframes}", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1.5, (0, 0, 255), 2, cv2.LINE_AA)
+        cv2.putText(frame, f"{cpose}: {npose}", (440, 30), cv2.FONT_HERSHEY_SIMPLEX, 1.5, (0, 0, 255), 2, cv2.LINE_AA)
+        
         if hand_result.multi_hand_landmarks:
             for idx, hand_landmarks in enumerate(hand_result.multi_hand_landmarks):
                 mp.solutions.drawing_utils.draw_landmarks(frame,hand_landmarks,mp.solutions.hands.HAND_CONNECTIONS)
@@ -90,16 +100,16 @@ def start():
         if len(BO) <= 0:
             BO = [0 for _ in range(14)]      
         row.extend(BO)        
-        row.append(cpose)
         client.append(row)
-        cv2.imshow("Recoarding..", img)
-        if cv2.waitKey(1) == 13:
+        cv2.imshow("Recoarding..", frame)
+        if cv2.waitKey(1) == 13 and nframes>15:
             break
     cv2.destroyAllWindows()
 
 def cancel():
-    global client
-    client=[] 
+    global client, npose
+    client=[]
+    npose-=1 
     print("data cleared!")   
 
 def change_pose():
@@ -122,9 +132,13 @@ while True:
     if order == "cs":
         cancel()
     elif order == "exc":
+        save()
         break
     elif order == "ad":
+        save()
         change_pose()
+    elif order == "s":
+        save()
     else:
         save()
         nframes = 0
