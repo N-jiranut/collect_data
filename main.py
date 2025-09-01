@@ -70,8 +70,8 @@ def start():
         pose_results = pose.process(frame)
         frame = cv2.cvtColor(frame,cv2.COLOR_RGB2BGR)
     
-        cv2.putText(frame, f"Rec-{nframes}", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1.5, (0, 0, 255), 2, cv2.LINE_AA)
-        cv2.putText(frame, f"{cpose}: {npose}", (440, 30), cv2.FONT_HERSHEY_SIMPLEX, 1.5, (0, 0, 255), 2, cv2.LINE_AA)
+        cv2.putText(frame, f"Rec-{nframes}", (10, 40), cv2.FONT_HERSHEY_SIMPLEX, 1.5, (0, 0, 255), 2, cv2.LINE_AA)
+        cv2.putText(frame, f"{cpose}: {npose}", (500, 40), cv2.FONT_HERSHEY_SIMPLEX, 1.5, (0, 0, 255), 2, cv2.LINE_AA)
         
         if hand_result.multi_hand_landmarks:
             for idx, hand_landmarks in enumerate(hand_result.multi_hand_landmarks):
@@ -109,7 +109,6 @@ def start():
 def cancel():
     global client, npose
     client=[]
-    npose-=1 
     print("data cleared!")   
 
 def change_pose():
@@ -122,7 +121,10 @@ def change_pose():
     
     print("")
     print("")
-
+    
+def check():
+    if input("Type 'y' to save:") == "y":
+        return True
 
 change_pose()
 while True:
@@ -132,16 +134,21 @@ while True:
     if order == "cs":
         cancel()
     elif order == "exc":
-        save()
+        if check():
+            save()
         break
     elif order == "ad":
-        save()
+        if check():
+            save()
         change_pose()
     elif order == "s":
         save()
-    else:
+    elif order == "":
         save()
         nframes = 0
         start()
+    else:
+        print("no command found")
+        continue
 cap.release()
 cv2.destroyAllWindows() 
